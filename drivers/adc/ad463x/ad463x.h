@@ -174,6 +174,21 @@ enum ad463x_id {
 };
 
 /**
+ * @enum ad463x_pga_gain
+ * @brief Available PGA gains
+ */
+enum ad463x_pga_gain {
+	/** Vout/Vin = 0.33  */
+	AD463X_GAIN_0_33 = 0,
+	/** Vout/Vin = 0.56  */
+	AD463X_GAIN_0_56 = 1,
+	/** Vout/Vin = 2.22  */
+	AD463X_GAIN_2_22 = 2,
+	/** Vout/Vin = 6.67  */
+	AD463X_GAIN_6_67 = 3,
+};
+
+/**
  * @struct ad463x_dev
  * @brief Device initialization parameters.
  */
@@ -182,6 +197,8 @@ struct ad463x_init_param {
 	struct no_os_spi_init_param *spi_init;
 	/** GPIO */
 	struct no_os_gpio_init_param *gpio_resetn;
+	struct no_os_gpio_init_param *gpio_pga_a0;
+	struct no_os_gpio_init_param *gpio_pga_a1;
 	/** PWM */
 	struct no_os_pwm_init_param *trigger_pwm_init;
 	/** SPI module offload init */
@@ -204,6 +221,8 @@ struct ad463x_init_param {
 	uint8_t data_rate;
 	/** Output Mode */
 	uint8_t output_mode;
+	/** PGA availability */
+	bool pga_available;
 	/** Invalidate the Data cache for the given address range */
 	void (*dcache_invalidate_range)(uint32_t address, uint32_t bytes_count);
 };
@@ -217,6 +236,8 @@ struct ad463x_dev {
 	struct no_os_spi_desc *spi_desc;
 	/** GPIO */
 	struct no_os_gpio_desc *gpio_resetn;
+	struct no_os_gpio_desc *gpio_pga_a0;
+	struct no_os_gpio_desc *gpio_pga_a1;
 	/** PWM */
 	struct no_os_pwm_desc *trigger_pwm_desc;
 	/** SPI module offload init */
@@ -241,6 +262,8 @@ struct ad463x_dev {
 	uint8_t data_rate;
 	/** Output Mode */
 	uint8_t output_mode;
+	/** PGA availability */
+	bool pga_available;
 	/** Invalidate the Data cache for the given address range */
 	void (*dcache_invalidate_range)(uint32_t address, uint32_t bytes_count);
 };
@@ -298,6 +321,10 @@ int32_t ad463x_read_data(struct ad463x_dev *dev,
 /** Device initialization */
 int32_t ad463x_init(struct ad463x_dev **device,
 		    struct ad463x_init_param *init_param);
+
+/** Control PGA gain */
+int32_t ad463x_set_pga_gain(struct ad463x_dev *dev,
+				int gain_idx);
 
 /** Free resources */
 int32_t ad463x_remove(struct ad463x_dev *dev);

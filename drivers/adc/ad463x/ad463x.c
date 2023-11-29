@@ -314,7 +314,7 @@ static int32_t ad463x_init_gpio(struct ad463x_dev *dev,
 				struct ad463x_init_param *init_param)
 {
 	int32_t ret;
-
+	/* configure reset pin */
 	ret = no_os_gpio_get_optional(&dev->gpio_resetn, init_param->gpio_resetn);
 	if (ret != 0)
 		return ret;
@@ -333,6 +333,26 @@ static int32_t ad463x_init_gpio(struct ad463x_dev *dev,
 		no_os_mdelay(100);
 	}
 
+	/** configure PGA pins, if available */
+	if(dev->pga_available){
+		ret = no_os_gpio_get_optional(&dev->gpio_pga_a0 ,init_param->gpio_pga_a0);
+		if (ret != 0)
+			return ret;
+		ret = no_os_gpio_get_optional(&dev->gpio_pga_a1, init_param->gpio_pga_a1);
+		if (ret != 0)
+			return ret;
+		/* set default values */
+		if (dev->gpio_pga_a0) {
+			ret = no_os_gpio_direction_output(dev->gpio_pga_a0, NO_OS_GPIO_LOW);
+			if (ret != 0)
+				return ret;
+		}
+		if (dev->gpio_pga_a1) {
+			ret = no_os_gpio_direction_output(dev->gpio_pga_a1, NO_OS_GPIO_LOW);
+			if (ret != 0)
+				return ret;
+		}
+	}
 	return 0;
 }
 
@@ -408,7 +428,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	if (!dev)
 		return -1;
 
-	/** Perform Hardware Reset */
+	/** Perform Hardware Reset and configure pins */
 	ret = ad463x_init_gpio(dev, init_param);
 	if (ret != 0)
 		goto error_dev;
@@ -431,6 +451,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	if (ret != 0)
 		goto error_clkgen;
 
+	dev->pga_available = init_param->pga_available;
 	dev->offload_init_param = init_param->offload_init_param;
 	dev->reg_access_speed = init_param->reg_access_speed;
 	dev->reg_data_width = init_param->reg_data_width;
@@ -529,11 +550,66 @@ error_clkgen:
 	axi_clkgen_remove(dev->clkgen);
 error_gpio:
 	no_os_gpio_remove(dev->gpio_resetn);
+	no_os_gpio_remove(dev->gpio_pga_a0);
+	no_os_gpio_remove(dev->gpio_pga_a1);
 error_dev:
 	no_os_free(dev);
 
 	return -1;
 }
+
+/**
+ * @brief Set the PGA gain.
+ * @param [in] dev - Pointer to the device handler.
+ * @param [in] gain_idx - Gain control index, consult values in ad463x_pga_gain.
+ * @return 0 in case of success, -1 otherwise
+ */
+int32_t ad463x_set_pga_gain(struct ad463x_dev *dev,
+				int gain_idx)
+{
+	int32_t ret;
+	/** check if gain available in the ADC */
+	if(!dev->pga_available)
+		return -1;
+	/** set A0 and A1 pins acoording to gain index value */
+	switch (gain_idx) {
+	case 0:
+		ret = no_os_gpio_set_value(dev->gpio_pga_a0, NO_OS_GPIO_LOW);
+		if (ret != 0)
+			return ret;
+		ret = no_os_gpio_set_value(dev->gpio_pga_a1, NO_OS_GPIO_LOW);
+		if (ret != 0)
+			return ret;
+		break;
+	case 1:
+		ret = no_os_gpio_set_value(dev->gpio_pga_a0, NO_OS_GPIO_HIGH);
+		if (ret != 0)
+			return ret;
+		ret = no_os_gpio_set_value(dev->gpio_pga_a1, NO_OS_GPIO_LOW);
+		if (ret != 0)
+			return ret;
+		break;
+	case 2:
+		ret = no_os_gpio_set_value(dev->gpio_pga_a0, NO_OS_GPIO_LOW);
+		if (ret != 0)
+			return ret;
+		ret = no_os_gpio_set_value(dev->gpio_pga_a1, NO_OS_GPIO_HIGH);
+		if (ret != 0)
+			return ret;
+		break;
+	case 3:
+		ret = no_os_gpio_set_value(dev->gpio_pga_a0, NO_OS_GPIO_HIGH);
+		if (ret != 0)
+			return ret;
+		ret = no_os_gpio_set_value(dev->gpio_pga_a1, NO_OS_GPIO_HIGH);
+		if (ret != 0)
+			return ret;
+		break;
+	default:
+		return -1;
+	}
+}
+
 
 /**
  * @brief Free the memory allocated by ad463x_init().
@@ -556,6 +632,14 @@ int32_t ad463x_remove(struct ad463x_dev *dev)
 		return ret;
 
 	ret = no_os_gpio_remove(dev->gpio_resetn);
+	if (ret != 0)
+		return ret;
+
+	ret = no_os_gpio_remove(dev->gpio_pga_a0);
+	if (ret != 0)
+		return ret;
+
+	ret = no_os_gpio_remove(dev->gpio_pga_a1);
 	if (ret != 0)
 		return ret;
 
