@@ -53,6 +53,23 @@
 /******************************************************************************/
 #define AD463x_TEST_DATA 0xAA
 
+#define NANO 1000000000ULL
+#define ADAQ4224_GAIN_MAX_NANO 6670000000ULL
+
+/*
+ * Gains computed as fractions of 1000 so they can be expressed by integers.
+ */
+static const int ad4630_gains[4] = {
+	330, 560, 2220, 6670
+};
+
+// Declaration for DIV_ROUND_CLOSEST_ULL if not provided by the system
+#define DIV_ROUND_CLOSEST_ULL(x, divisor) (((x) + ((divisor) / 2)) / (divisor))
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#endif
+
 /******************************************************************************/
 /************************* Functions Definitions ******************************/
 /******************************************************************************/
@@ -556,6 +573,62 @@ error_dev:
 	no_os_free(dev);
 
 	return -1;
+}
+
+
+int32_t ad463x_calc_pga_gain(int gain_int, int gain_fract, int vref, int precision) {
+    // Calculate the integer part of the PGA gain
+    int32_t pga_int = (int32_t)gain_int << precision;
+
+    // Add the fractional part of the PGA gain
+    int32_t pga_gain = pga_int + ((int32_t)gain_fract << precision) / 1000; // assuming gain_fract is in milliunits
+
+    // Calculate the complete gain using the conversion formula
+    int32_t result = (vref * 2) / pga_gain;
+
+    return result;
+}
+
+static int find_closest(int target, const int array[], size_t size) {
+    if (size == 0) {
+        // Handle the case where the array is empty
+        return -1; // or any other appropriate value
+    }
+
+    int closest_index = 0;
+    int closest_diff = abs((int)(target - array[0]));
+
+    for (size_t i = 1; i < size; ++i) {
+        uint64_t current_diff = abs((int)(target - array[i]));
+
+        if (current_diff < closest_diff) {
+            closest_index = (int)i;
+            closest_diff = current_diff;
+        }
+    }
+
+    return closest_index;
+}
+
+static int32_t ad463x_calc_pga_gain(int gain_int, int gain_fract, int vref,
+                                 int precision)
+{
+    int gain_idx;
+    uint64_t gain_nano, tmp;
+
+    gain_nano = (uint64_t)gain_int * NANO + gain_fract;
+    printf("gain nano: %ld\n",gain_nano);
+    if (gain_nano < 0 || gain_nano > ADAQ4224_GAIN_MAX_NANO)
+        return -1;
+    tmp = gain_nano << precision;
+    printf("gain nano: %ld\n",tmp);
+    tmp = DIV_ROUND_CLOSEST_ULL(tmp, NANO);
+    printf("gain nano: %ld\n",tmp);
+    gain_nano = DIV_ROUND_CLOSEST_ULL(vref * 2, tmp);
+    printf("gain nano: %ld\n",gain_nano);
+    gain_idx = find_closest(gain_nano, ad4630_gains, ARRAY_SIZE(ad4630_gains));
+
+    return gain_idx;
 }
 
 /**
