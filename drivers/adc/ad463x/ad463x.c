@@ -575,6 +575,13 @@ error_dev:
 	return -1;
 }
 
+/**
+ * @brief Find closest value of an array of intergers.
+ * @param [in] target - Target/reference value.
+ * @param [in] array - Input Array.
+ * @param [in] size - array size.
+ * @return Gain control index, in case of success, -1 otherwise
+ */
 static int32_t find_closest(int32_t target, const int32_t array[], size_t size) {
     if (size == 0) {
         // Handle the case where the array is empty
@@ -596,6 +603,14 @@ static int32_t find_closest(int32_t target, const int32_t array[], size_t size) 
     return closest_index;
 }
 
+/**
+ * @brief Calculate the PGA gain.
+ * @param [in] gain_int - Interger part of the gain.
+ * @param [in] gain_fract - Fractional part of the gain.
+ * @param [in] vref - Reference Voltage.
+ * @param [in] precision - Precision  value shifter.
+ * @return Gain control index, in case of success, -1 otherwise
+ */
 int32_t ad463x_calc_pga_gain(int32_t gain_int, int32_t gain_fract, int32_t vref,
                                  int32_t precision)
 {
