@@ -322,9 +322,13 @@ int32_t ad463x_read_data(struct ad463x_dev *dev,
 int32_t ad463x_init(struct ad463x_dev **device,
 		    struct ad463x_init_param *init_param);
 
+/** Calculate PGA gain */
+int32_t ad463x_calc_pga_gain(int32_t gain_int, int32_t gain_fract, int32_t vref,
+                                 int32_t precision);
+
 /** Control PGA gain */
 int32_t ad463x_set_pga_gain(struct ad463x_dev *dev,
-				int gain_idx);
+				int32_t gain_idx);
 
 /** Free resources */
 int32_t ad463x_remove(struct ad463x_dev *dev);

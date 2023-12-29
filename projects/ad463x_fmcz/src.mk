@@ -9,6 +9,8 @@
 #									       #
 ################################################################################
 
+CFLAGS += -DWITH_PGA_GAIN=1
+
 SRCS := $(PROJECT)/src/ad463x_fmc.c
 SRCS += $(DRIVERS)/api/no_os_spi.c \
 	$(DRIVERS)/api/no_os_pwm.c \
@@ -23,28 +25,10 @@ SRCS += $(DRIVERS)/api/no_os_spi.c \
 	$(NO-OS)/util/no_os_util.c \
 	$(NO-OS)/util/no_os_alloc.c \
 	$(NO-OS)/util/no_os_mutex.c
-# SRCS +=	$(PLATFORM_DRIVERS)/xilinx_axi_io.c \
-# 	$(PLATFORM_DRIVERS)/xilinx_gpio.c \
-# 	$(PLATFORM_DRIVERS)/xilinx_spi.c \
-# 	$(PLATFORM_DRIVERS)/xilinx_delay.c
-
-INCS += $(PLATFORM_DRIVERS)/maxim_delay.h     \
-        $(PLATFORM_DRIVERS)/maxim_gpio.h      \
-        $(PLATFORM_DRIVERS)/maxim_spi.h       \
-        $(PLATFORM_DRIVERS)/maxim_gpio_irq.h  \
-        $(PLATFORM_DRIVERS)/maxim_irq.h       \
-        $(PLATFORM_DRIVERS)/maxim_rtc.h       \
-        $(PLATFORM_DRIVERS)/maxim_uart.h      \
-        $(PLATFORM_DRIVERS)/maxim_uart_stdio.h
-
-SRCS += $(PLATFORM_DRIVERS)/maxim_delay.c     \
-        $(PLATFORM_DRIVERS)/maxim_gpio.c      \
-        $(PLATFORM_DRIVERS)/maxim_spi.c       \
-        $(PLATFORM_DRIVERS)/maxim_rtc.c       \
-        $(PLATFORM_DRIVERS)/maxim_gpio_irq.c  \
-        $(PLATFORM_DRIVERS)/maxim_irq.c       \
-        $(PLATFORM_DRIVERS)/maxim_uart.c      \
-        $(PLATFORM_DRIVERS)/maxim_uart_stdio.c
+SRCS +=	$(PLATFORM_DRIVERS)/xilinx_axi_io.c \
+	$(PLATFORM_DRIVERS)/xilinx_gpio.c \
+	$(PLATFORM_DRIVERS)/xilinx_spi.c \
+	$(PLATFORM_DRIVERS)/xilinx_delay.c
 
 ifeq (y,$(strip $(IIOD)))
 LIBRARIES += iio

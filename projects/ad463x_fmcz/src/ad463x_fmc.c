@@ -132,7 +132,7 @@ int main()
 		.platform_ops = &xil_gpio_ops,
 		.extra = &gpio_extra_param
 	};
-#ifdef WITH_PGA_GAIN
+#if WITH_PGA_GAIN
 	/* For ADAQ4224  - PGA pins */
 	struct no_os_gpio_init_param ad463x_pga_a0 = {
 		.number = 12, // TODO: input a real GPIO
@@ -158,7 +158,7 @@ int main()
 
 	struct ad463x_init_param ad463x_init_param = {
 		.spi_init = &spi_init,
-#ifdef WITH_PGA_GAIN
+#if WITH_PGA_GAIN
 		.pga_available = true,
 		.gpio_pga_a0 = &ad463x_pga_a0,
 		.gpio_pga_a1 = &ad463x_pga_a1,
@@ -223,9 +223,16 @@ int main()
 	if (ret != 0)
 		return ret;
 
-#ifdef WITH_PGA_GAIN
+#if WITH_PGA_GAIN
+	/* estimating a gain of 2500, calculate the closest
+	accepted PGA gain value */
+	int32_t gain_int = 2;
+    int32_t gain_fract = 500;
+    int32_t vref = 5000;
+    int32_t precision =1;
+    int32_t pga_gain_idx = ad463x_calc_pga_gain (gain_int, gain_fract, vref, precision);
 	/** set PGA gain */
-	ret = ad463x_set_pga_gain(dev, AD463X_GAIN_6_67);
+	ret = ad463x_set_pga_gain(dev, pga_gain_idx);
 	if (ret != 0)
 		return ret;
 #endif
