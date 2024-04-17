@@ -401,7 +401,7 @@ error_gpio_reset:
  *        Enter register mode to read/write registers
  * @param [in] dev - ad469x_dev device handler.
  * @param [out] buf - data buffer.
- * @param [in] samples - sample number.
+ * @param [in] samples - samples per channel.
  * @return 0 in case of success, -1 otherwise.
  */
 int32_t ad463x_read_data(struct ad463x_dev *dev,
@@ -410,6 +410,7 @@ int32_t ad463x_read_data(struct ad463x_dev *dev,
 {
 	int32_t ret;
 	uint32_t commands_data[1] = {0};
+	uint32_t total_bytes = samples * dev->num_chn * 4;
 	struct spi_engine_offload_message msg;
 	uint32_t spi_eng_msg_cmds[3] = {
 		CS_LOW,
@@ -431,15 +432,15 @@ int32_t ad463x_read_data(struct ad463x_dev *dev,
 	msg.commands_data = commands_data;
 
 	if (dev->dcache_invalidate_range)
-		dev->dcache_invalidate_range(msg.rx_addr, samples * 2);
+		dev->dcache_invalidate_range(msg.rx_addr, total_bytes);
 
 	ret = spi_engine_offload_transfer(dev->spi_desc, msg,
-					  (int)(samples*4/dev->read_bytes_no));
+					  (int)(total_bytes / dev->read_bytes_no));
 	if (ret != 0)
 		return ret;
 
 	if (dev->dcache_invalidate_range)
-		dev->dcache_invalidate_range(msg.rx_addr, samples * 2);
+		dev->dcache_invalidate_range(msg.rx_addr, total_bytes);
 
 	return ret;
 }
@@ -520,6 +521,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	if (ret != 0)
 		goto error_clkgen;
 
+	dev->num_chn = init_param->num_chn;
 	dev->vref = init_param->vref;
 	dev->pgia_idx = 0;
 	dev->offload_init_param = init_param->offload_init_param;
