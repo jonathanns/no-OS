@@ -174,7 +174,7 @@ static int ad463x_iio_read_raw(void *dev, char *buf, uint32_t len,
 	if (ret != 0)
 		return ret;
 
-	ret = ad463x_read_data(iio_desc->ad463x_desc, temp, 2);
+	ret = ad463x_read_data(iio_desc->ad463x_desc, temp, 1);
 	if (ret != 0)
 		return ret;
 	/** Get sample in the middle according to the channel */
@@ -217,7 +217,7 @@ static int ad463x_iio_read_scale(void *dev, char *buf, uint32_t len,
 	}
 
 	vals[0] = (ad463x_dev->vref * 2) / 1000;
-	vals[1] = ad463x_dev->capture_data_width;
+	vals[1] = ad463x_dev->real_bits_precision;
 	return iio_format_value(buf, len, IIO_VAL_FRACTIONAL_LOG2, 2, vals);
 }
 
@@ -285,7 +285,7 @@ static int ad463x_iio_read_scale_avail(void *dev, char *buf,
 	}
 
 	vals[0] = (ad463x_dev->vref * 2) / 1000;
-	vals[1] = ad463x_dev->capture_data_width;
+	vals[1] = ad463x_dev->real_bits_precision;
 	return iio_format_value(buf, len, IIO_VAL_FRACTIONAL_LOG2, 2, vals);
 }
 
@@ -318,7 +318,7 @@ static int32_t _iio_ad463x_read_dev(struct iio_ad463x *desc, uint32_t *buff,
 		goto error_comm;
 
 	/** Read samples */
-	ret = ad463x_read_data(desc->ad463x_desc, data, total_samples * 2);
+	ret = ad463x_read_data(desc->ad463x_desc, data, nb_samples);
 	if (ret != 0)
 		goto error_comm;
 
